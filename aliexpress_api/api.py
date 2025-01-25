@@ -430,4 +430,44 @@ class AliexpressApi:
         else:
             raise OrdersNotFoundException("No orders found for the specified parameters")
 
+    def get_product_shipping_info(
+        self,
+        product_id: int,
+        sku_id: int,
+        ship_to_country: str,
+        target_sale_price: str,
+        tax_rate: str,
+        # Optionally let these default to the instance defaults:
+        target_currency: models.Currency = None,
+        target_language: models.Language = None
+    ):
+        """
+        Get shipping information for a specific product & SKU.
 
+        :param product_id: The Aliexpress product ID.
+        :param sku_id:     The specific SKU ID within the product.
+        :param ship_to_country:  2-letter country code (e.g. "US", "MA", etc.).
+        :param target_sale_price: String representation of the sale price in the target currency (e.g. "19.99").
+        :param tax_rate:   String representation of the product's tax rate (e.g. "0.05").
+        :param target_currency: (Optional) Override instance currency. e.g. "USD", "EUR", ...
+        :param target_language: (Optional) Override instance language. e.g. "EN", "AR", ...
+        :return: Raw shipping response object from AliExpress, or raise an exception if not found.
+        """
+
+        request = aliapi.rest.AliexpressAffiliateProductShippingInfoGetRequest()
+        request.app_signature = self._app_signature
+        request.product_id = product_id
+        request.sku_id = sku_id
+        request.ship_to_country = ship_to_country
+        request.target_currency = target_currency or self._currency
+        request.target_sale_price = target_sale_price
+        request.target_language = target_language or self._language
+        request.tax_rate = tax_rate
+
+        response = api_request(request, 'aliexpress_affiliate_product_shipping_get_response')
+
+        if hasattr(response, 'resp_result'):
+            return response.resp_result
+        else:
+            # Decide how you'd like to handle no data
+            raise ProductsNotFoudException('No shipping info returned.')
